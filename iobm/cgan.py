@@ -28,16 +28,18 @@ class cGAN_configs():
     def __init__(self, args) -> None:
         self.data_name = args.data
         self.project_path = os.getcwd()
+        self.root_path = os.path.join(self.project_path, args.data)
+        
+        if not self.__is_image_directory(self.root_path):
+            raise Exception(f"Data directory not structured properly")
+
         if not os.path.exists(os.path.join(self.project_path, 'cGAN outputs')):
             os.mkdir(os.path.join(self.project_path, 'cGAN outputs'))
         if not os.path.exists(os.path.join(self.project_path, 'cGAN outputs', f'{self.data_name}_outs')):
             os.mkdir(os.path.join(self.project_path, 'cGAN outputs', f'{self.data_name}_outs'))
-        self.root_path = os.path.join(self.project_path, args.data)
+
         self.model_path = os.path.join(self.project_path, 'cGAN outputs', f'{self.data_name}_outs', f'{self.data_name}_generator.pth')
         self.dict_path = os.path.join(self.project_path, 'cGAN outputs', f'{self.data_name}_outs', f'{self.data_name}_class2index.pkl')
-
-        if not self.__is_image_directory(self.root_path):
-            raise Exception(f"Data directory not structured properly")
 
         try:
             self.n_classes = len(os.listdir(self.root_path))
@@ -114,6 +116,11 @@ print(f"\nFound {configs.n_classes} possible classes of data: {configs.data_name
 class DatasetCollector(Dataset):
     def __init__(self, rescale=True):
         self.class_to_idx = {cls: idx for idx, cls in enumerate(os.listdir(configs.root_path))}
+
+        if not os.path.exists(os.path.join(configs.project_path, 'cGAN outputs')):
+            os.mkdir(os.path.join(configs.project_path, 'cGAN outputs'))
+        if not os.path.exists(os.path.join(configs.project_path, 'cGAN outputs', f'{configs.data_name}_outs')):
+            os.mkdir(os.path.join(configs.project_path, 'cGAN outputs', f'{configs.data_name}_outs'))
         
         with open(configs.dict_path, 'wb') as file_obj:
             pickle.dump(self.class_to_idx, file_obj)
@@ -479,25 +486,28 @@ class cGAN():
             self.train_state = True
 
     def save_generator(self):
+        if not os.path.exists(os.path.join(configs.project_path, 'cGAN outputs')):
+            os.mkdir(os.path.join(configs.project_path, 'cGAN outputs'))
+        if not os.path.exists(os.path.join(configs.project_path, 'cGAN outputs', f'{configs.data_name}_outs')):
+            os.mkdir(os.path.join(configs.project_path, 'cGAN outputs', f'{configs.data_name}_outs'))
+
         if not self.train_state:
             raise Exception('Train generator first')
         torch.save(self.generator.state_dict(), configs.model_path)
 
-class Run_cGAN():
-    def __init__(self) -> None:
-        try:
-            args = parse_arguments()
-            cgan_config = cGAN_configs(args)
-            # Rest of your code...
-        except Exception:
-            print(Exception)
-    
-        trainer = cGAN()
-        print(f"Training cGAN model for {cgan_config.epochs} epoch(s)...\n")
-        trainer.train(num_epochs=cgan_config.epochs)
-        print(f"Training complete")
-        trainer.save_generator()
-        print(f"Generator saved as \"{f'{configs.data_name}_generator.pth'}\"\n")
+def run_cGAN() -> None:
+    try:
+        args = parse_arguments()
+        cgan_config = cGAN_configs(args)
+    except Exception:
+        print(Exception)
 
-# Run this file
-run_cgan = Run_cGAN()
+    trainer = cGAN()
+    print(f"Training cGAN model for {cgan_config.epochs} epoch(s)...\n")
+    trainer.train(num_epochs=cgan_config.epochs)
+    print(f"Training complete")
+    trainer.save_generator()
+    print(f"Generator saved as \"{f'{configs.data_name}_generator.pth'}\"\n")
+
+if __name__ == "__main__":
+    run_cGAN()
