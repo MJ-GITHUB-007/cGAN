@@ -499,4 +499,5 @@ class Run_cGAN():
         trainer.save_generator()
         print(f"Generator saved as \"{f'{configs.data_name}_generator.pth'}\"\n")
 
+# Run this file
 run_cgan = Run_cGAN()
