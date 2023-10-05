@@ -111,6 +111,7 @@ class cGAN_configs():
 # Necessary code
 args = parse_arguments()
 configs = cGAN_configs(args)
+device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"\nFound {configs.n_classes} possible classes of data: {configs.data_name}")
 
 class DatasetCollector(Dataset):
@@ -183,12 +184,12 @@ class Generator(nn.Module):
         self.label_conditioned_generator = nn.Sequential(
             nn.Embedding(num_embeddings=configs.n_classes, embedding_dim=configs.embedding_size),
             nn.Linear(in_features=configs.embedding_size, out_features=16)
-        )
+        ).to(device)
 
         self.latent = nn.Sequential(
             nn.Linear(in_features=configs.latent_size, out_features=4*4*512),
             nn.LeakyReLU(negative_slope=0.2, inplace=True)
-        )
+        ).to(device)
 
         self.model = nn.Sequential(
             # 4x4 to 8x8
@@ -282,11 +283,12 @@ class Generator(nn.Module):
             ),
             nn.Tanh(),
             TensorScaler(scale_factor=255/2.0, offset=255/2.0)
-        )
+        ).to(device)
     
     def forward(self, inputs):
         # get noise and label
         noise_vector, label = inputs
+        noise_vector, label = noise_vector.to(device), label.to(device)
 
         # converting label 1x1x1 to 1x4x4
         label_output = self.label_conditioned_generator(label)
@@ -316,7 +318,7 @@ class Discriminator(nn.Module):
         self.label_condition_disc = nn.Sequential(
                 nn.Embedding(num_embeddings=configs.n_classes, embedding_dim=configs.embedding_size),
                 nn.Linear(in_features=configs.embedding_size, out_features=3*256*256)
-        )
+        ).to(device)
 
         self.model = nn.Sequential(
             # 256x256 to 128x128
@@ -398,11 +400,12 @@ class Discriminator(nn.Module):
             nn.Dropout(0.4),
             nn.Linear(in_features=4608, out_features=1),
             nn.Sigmoid()
-        )
+        ).to(device)
     
     def forward(self, inputs):
         # getting image and label
         img, label = inputs
+        img, label = img.to(device), label.to(device)
 
         # scaling down image
         img = self.image_scaler(img)
@@ -424,8 +427,7 @@ class cGAN():
         dataset = DatasetCollector(rescale=True)
         self.train_state = False
 
-        self.data_loader = DataLoader(dataset=dataset, batch_size=configs.batch_size, shuffle=True)
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.data_loader = DataLoader(dataset=dataset, batch_size=configs.batch_size, shuffle=True, pin_memory=True)
 
         self.criterion_generator = nn.BCELoss()
         self.criterion_discriminator = nn.BCELoss()
@@ -444,25 +446,25 @@ class cGAN():
 
             for index, batch in enumerate(progress_bar):
                 real_images, labels = batch['image'], batch['label']
-                real_images = real_images.to(self.device)
-                labels = labels.to(self.device)
+                real_images = real_images
+                labels = labels
                 labels = labels.unsqueeze(1).long()
 
-                real_target = Variable(torch.ones(real_images.size(0), 1).to(self.device))
-                fake_target = Variable(torch.zeros(real_images.size(0), 1).to(self.device))
+                real_target = Variable(torch.ones(real_images.size(0), 1))
+                fake_target = Variable(torch.zeros(real_images.size(0), 1))
 
                 # Train Discriminator
                 self.optimizer_discriminator.zero_grad()
 
                 D_real_output = self.discriminator((real_images, labels))
-                D_real_loss = self.criterion_discriminator(D_real_output, real_target)
+                D_real_loss = self.criterion_discriminator(D_real_output.to(device), real_target.to(device))
 
-                noise_vector = torch.randn(real_images.size(0), configs.latent_size, device=self.device)
-                noise_vector = noise_vector.to(self.device)
+                noise_vector = torch.randn(real_images.size(0), configs.latent_size)
+                noise_vector = noise_vector.to(device)
                 generated_image = self.generator((noise_vector, labels))
 
                 D_fake_output = self.discriminator((generated_image.detach(), labels))
-                D_fake_loss = self.criterion_discriminator(D_fake_output, fake_target)
+                D_fake_loss = self.criterion_discriminator(D_fake_output.to(device), fake_target.to(device))
 
                 D_total_loss = (D_real_loss + D_fake_loss) / 2
 
@@ -473,7 +475,7 @@ class cGAN():
                 self.optimizer_generator.zero_grad()
 
                 G_output = self.discriminator((generated_image, labels))
-                G_loss = self.criterion_generator(G_output, real_target)
+                G_loss = self.criterion_generator(G_output.to(device), real_target.to(device))
 
                 G_loss.backward()
                 self.optimizer_generator.step()
