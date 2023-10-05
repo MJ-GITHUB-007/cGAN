@@ -10,7 +10,6 @@ import argparse
 import pickle
 from PIL import Image
 from tqdm import tqdm
-import pretty_errors
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='cGAN Configuration and Training')
@@ -500,5 +499,4 @@ class Run_cGAN():
         trainer.save_generator()
         print(f"Generator saved as \"{f'{configs.data_name}_generator.pth'}\"\n")
 
-if __name__ == "__main__":
-    run_cgan = Run_cGAN()
+run_cgan = Run_cGAN()
