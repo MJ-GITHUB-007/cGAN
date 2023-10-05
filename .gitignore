@@ -165,3 +165,7 @@ str_data
 
 # Outputs
 cGAN outputs
+
+# Other files
+setup.cfg
+pyproject.toml
