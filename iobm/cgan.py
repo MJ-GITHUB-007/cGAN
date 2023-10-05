@@ -109,7 +109,7 @@ class cGAN_configs():
 # Necessary code
 args = parse_arguments()
 configs = cGAN_configs(args)
-print(f"\nFound {configs.n_classes} possible classes of data")
+print(f"\nFound {configs.n_classes} possible classes of data: {configs.data_name}")
 
 class DatasetCollector(Dataset):
     def __init__(self, rescale=True):
