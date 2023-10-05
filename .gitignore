@@ -168,4 +168,6 @@ cGAN outputs
 
 # Other files
 setup.cfg
+setup.py
 pyproject.toml
+dist/
