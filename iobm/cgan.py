@@ -506,7 +506,7 @@ def run_cGAN() -> None:
         print(Exception)
 
     trainer = cGAN()
-    print(f"Training cGAN model for {cgan_config.epochs} epoch(s)...\n")
+    print(f"\nTraining cGAN model for {cgan_config.epochs} epoch(s)...\n")
     trainer.train(num_epochs=cgan_config.epochs)
     print(f"Training complete\n")
 
