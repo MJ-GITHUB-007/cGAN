@@ -114,6 +114,11 @@ configs = cGAN_configs(args)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"\nFound {configs.n_classes} possible classes of data: {configs.data_name}")
 
+if torch.cuda.is_available():
+    print("GPU Model : ", torch.cuda.get_device_name(0))
+else:
+    print("No GPU available, using CPU.")
+
 class DatasetCollector(Dataset):
     def __init__(self, rescale=True):
         self.class_to_idx = {cls: idx for idx, cls in enumerate(os.listdir(configs.root_path))}
@@ -441,7 +446,7 @@ class cGAN():
         
         for epoch in range(num_epochs):
 
-            progress_bar = tqdm(self.data_loader, total=len(self.data_loader), desc=f'Epoch {epoch + 1}/{num_epochs}', position=0, leave=True, ncols=150)
+            progress_bar = tqdm(self.data_loader, total=len(self.data_loader), desc=f'Epoch {epoch + 1}/{num_epochs}', position=0, leave=True, ncols=100)
 
             for index, batch in enumerate(progress_bar):
                 real_images, labels = batch['image'], batch['label']
