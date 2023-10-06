@@ -425,7 +425,6 @@ class Discriminator(nn.Module):
 class cGAN():
     def __init__(self) -> None:
         dataset = DatasetCollector(rescale=True)
-        self.train_state = False
 
         self.data_loader = DataLoader(dataset=dataset, batch_size=configs.batch_size, shuffle=True, pin_memory=True)
 
@@ -485,16 +484,13 @@ class cGAN():
                     "G_loss": G_loss.item(),
                 })
             print()
-            self.train_state = True
+            self.save_generator()
 
     def save_generator(self):
         if not os.path.exists(os.path.join(configs.project_path, 'cGAN outputs')):
             os.mkdir(os.path.join(configs.project_path, 'cGAN outputs'))
         if not os.path.exists(os.path.join(configs.project_path, 'cGAN outputs', f'{configs.data_name}_outs')):
             os.mkdir(os.path.join(configs.project_path, 'cGAN outputs', f'{configs.data_name}_outs'))
-
-        if not self.train_state:
-            raise Exception('Train generator first')
         torch.save(self.generator.state_dict(), configs.model_path)
 
 def run_cGAN() -> None:
@@ -507,9 +503,7 @@ def run_cGAN() -> None:
     trainer = cGAN()
     print(f"Training cGAN model for {cgan_config.epochs} epoch(s)...\n")
     trainer.train(num_epochs=cgan_config.epochs)
-    print(f"Training complete")
-    trainer.save_generator()
-    print(f"Generator saved as \"{f'{configs.data_name}_generator.pth'}\"\n")
+    print(f"Training complete\n")
 
 if __name__ == "__main__":
     run_cGAN()
