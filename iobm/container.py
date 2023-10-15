@@ -17,8 +17,8 @@ class Configs():
         self.image_size = 256
         self.latent_size = 100
         self.embedding_size = 100
-        self.generator_lr = 0.0002
-        self.discriminator_lr = 0.0002
+        self.generator_lr = 0.001
+        self.discriminator_lr = 0.001
         self.lambda_gp = 10
 
 class cGAN_train_configs(Configs):
