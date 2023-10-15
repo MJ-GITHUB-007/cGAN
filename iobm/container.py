@@ -584,7 +584,7 @@ class cGAN():
 
             progress_bar = tqdm(
                 self.data_loader,
-                unit='images',
+                unit='image',
                 total=len(self.data_loader),
                 bar_format=f'Epoch {epoch + 1}/{num_epochs} '+'|{bar:20}{r_bar}'
             )
@@ -734,7 +734,7 @@ class cGAN_Generator():
 
         # Save the generated images
         for idx, image in enumerate(generated_images):
-            save_path = os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'generation_{self.dir_num}', f'class_{self.class_id}__{idx}.png')
+            save_path = os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'generation_{self.dir_num}', f'class_{self.class_id}__{idx+1}.png')
             save_image(image, save_path)
 
         print("Images saved\n")
