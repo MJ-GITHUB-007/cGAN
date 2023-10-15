@@ -584,7 +584,7 @@ class cGAN():
 
             progress_bar = tqdm(
                 self.data_loader,
-                unit='image',
+                unit='batch',
                 total=len(self.data_loader),
                 bar_format=f'Epoch {epoch + 1}/{num_epochs} '+'|{bar:20}{r_bar}'
             )
