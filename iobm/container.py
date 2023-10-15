@@ -576,7 +576,7 @@ class cGAN():
 
         self.optimizer_generator = Adam(self.generator.parameters(), lr=self.generator_lr, betas=(0.9, 0.999), eps=1e-7, weight_decay=False, amsgrad=False)
         self.optimizer_discriminator = Adam(self.discriminator.parameters(), lr=self.discriminator_lr, betas=(0.9, 0.999), eps=1e-7, weight_decay=False, amsgrad=False)
-
+        self.criterion = nn.BCEWithLogitsLoss()
     def train(self, num_epochs):
 
         print(f"\nTraining {self.train_message} for {num_epochs} epoch(s)...\n")
@@ -590,38 +590,28 @@ class cGAN():
             )
 
             for index, batch in enumerate(progress_bar):
-                real_images, labels = batch['image'], batch['label']
-                real_images = real_images
-                labels = labels
-                labels = labels.unsqueeze(1).long()
+                real_images, real_labels = batch['image'], batch['label']
+                real_images = real_images.to(self.device)
+                real_labels = real_labels.to(self.device)
+                real_labels = real_labels.unsqueeze(1).long()
 
                 # Train Discriminator
                 self.optimizer_discriminator.zero_grad()
 
-                D_real_output = self.discriminator((real_images, labels))
-                D_real_loss = -torch.mean(D_real_output)
+                D_real_output = self.discriminator((real_images, real_labels))
+                D_real_labels = torch.ones_like(D_real_output)
+                D_real_loss = self.criterion(D_real_output, D_real_labels)
 
                 noise_vector = torch.randn(real_images.size(0), self.latent_size)
                 noise_vector = noise_vector.to(self.device)
-                generated_image = self.generator((noise_vector, labels))
+                generated_images = self.generator((noise_vector, real_labels))
+                generated_images = generated_images.to(self.device)
 
-                D_fake_output = self.discriminator((generated_image.detach(), labels))
-                D_fake_loss = torch.mean(D_fake_output)
+                D_fake_output = self.discriminator((generated_images.detach(), real_labels))
+                D_fake_labels = torch.zeros_like(D_fake_output)
+                D_fake_loss = self.criterion(D_fake_output, D_fake_labels)
 
-                # Gradient penalty
-                alpha = torch.rand(real_images.size(0), 1, 1, 1).to(self.device)
-                x_hat = alpha * real_images.data + (1 - alpha) * generated_image.data
-                x_hat.requires_grad = True
-                pred_hat = self.discriminator((x_hat, labels))
-                gradients = autograd.grad(
-                    outputs=pred_hat,
-                    inputs=x_hat,
-                    grad_outputs=torch.ones(pred_hat.size()).to(self.device),
-                    create_graph=True, retain_graph=True
-                    )[0]
-                gradient_penalty = torch.mean((gradients.norm(2, dim=1) - 1) ** 2)
-
-                D_total_loss = D_real_loss + D_fake_loss + self.lambda_gp * gradient_penalty
+                D_total_loss = D_real_loss + D_fake_loss
 
                 D_total_loss.backward(retain_graph=True)
                 self.optimizer_discriminator.step()
@@ -629,8 +619,8 @@ class cGAN():
                 # Train Generator
                 self.optimizer_generator.zero_grad()
 
-                G_output = self.discriminator((generated_image, labels))
-                G_loss = -torch.mean(G_output)
+                G_output = self.discriminator((generated_images, real_labels))
+                G_loss = self.criterion(G_output, real_labels)
 
                 G_loss.backward()
                 self.optimizer_generator.step()
@@ -638,7 +628,6 @@ class cGAN():
                 progress_bar.set_postfix({
                     "D_loss_real": D_real_loss.item(),
                     "D_loss_fake": D_fake_loss.item(),
-                    "GP_loss": gradient_penalty.item(),
                     "G_loss": G_loss.item(),
                 })
             print()
