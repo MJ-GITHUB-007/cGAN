@@ -620,7 +620,8 @@ class cGAN():
                 self.optimizer_generator.zero_grad()
 
                 G_output = self.discriminator((generated_images, real_labels))
-                G_loss = self.criterion(G_output, real_labels)
+                G_labels = torch.ones_like(G_output)
+                G_loss = self.criterion(G_output, G_labels)
 
                 G_loss.backward()
                 self.optimizer_generator.step()
