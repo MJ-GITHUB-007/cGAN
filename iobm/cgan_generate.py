@@ -43,7 +43,11 @@ def run_cGAN_generating() -> None:
     start_time = time.time()
     generator.generate()
     end_time = time.time()
-    print(f"Total generating time in seconds : {round(start_time-end_time, 3)}\n")
+    total_seconds = end_time-start_time
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = round(total_seconds % 60, 0)
+    print(f"Total generating time : {hours} hours, {minutes} minutes, and {seconds} seconds.\n")
 
 if __name__ == "__main__":
     run_cGAN_generating()
