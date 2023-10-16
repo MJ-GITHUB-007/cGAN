@@ -47,7 +47,7 @@ def run_cGAN_generating() -> None:
     hours = total_seconds // 3600
     minutes = (total_seconds % 3600) // 60
     seconds = round(total_seconds % 60, 0)
-    print(f"Total generating time : {hours} hours, {minutes} minutes, and {seconds} seconds.\n")
+    print(f"Total generating time : {int(hours)} hours, {int(minutes)} minutes, and {int(seconds)} seconds.\n")
 
 if __name__ == "__main__":
     run_cGAN_generating()
