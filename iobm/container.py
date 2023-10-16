@@ -635,7 +635,7 @@ class cGAN():
             print()
             self.save_generator()
 
-        print(f"Training complete\n")
+        print(f"Training complete")
 
     def save_generator(self):
         if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs')):
@@ -728,7 +728,7 @@ class cGAN_Generator():
             save_path = os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'generation_{self.dir_num}', f'class_{self.class_id}__{idx+1}.png')
             save_image(image, save_path)
 
-        print("Images saved\n")
+        print("Images saved")
 
 if __name__ == '__main__':
     pass

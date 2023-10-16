@@ -1,7 +1,7 @@
 import os
 import torch
 import argparse
-from PIL import Image
+import time
 
 from iobm.container import cGAN_generate_configs, cGAN_Generator
 
@@ -40,7 +40,10 @@ def run_cGAN_generating() -> None:
         batch_size=configs.batch_size,
         dir_num = configs.dir_num
     )
+    start_time = time.time()
     generator.generate()
+    end_time = time.time()
+    print(f"Total generating time in seconds : {round(start_time-end_time, 3)}\n")
 
 if __name__ == "__main__":
     run_cGAN_generating()

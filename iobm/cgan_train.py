@@ -1,5 +1,6 @@
 import torch
 import argparse
+import time
 
 from iobm.container import cGAN, cGAN_train_configs
 
@@ -39,7 +40,10 @@ def run_cGAN_training() -> None:
         discriminator_lr=configs.discriminator_lr,
         lambda_gp=configs.lambda_gp
     )
+    start_time = time.time()
     trainer.train(num_epochs=configs.epochs)
+    end_time = time.time()
+    print(f"Total training time in seconds : {round(start_time-end_time, 3)}\n")
 
 if __name__ == "__main__":
     run_cGAN_training()
