@@ -19,7 +19,7 @@ def parse_arguments():
 args = parse_arguments()
 configs = cGAN_generate_configs(args)
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-print(f"\nGenerating {configs.quantity} images of class {configs.class_name}({configs.class_id})")
+print(f"\nGenerating {configs.quantity} images of class: {configs.class_name}, (id: {configs.class_id})")
 
 if torch.cuda.is_available():
     print(f"Using GPU : {torch.cuda.get_device_name(0)}\n")
