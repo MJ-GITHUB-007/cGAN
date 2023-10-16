@@ -22,7 +22,7 @@ print(f"\nFound {configs.n_classes} possible classes of data: {configs.data_name
 if torch.cuda.is_available():
     print("Using GPU : ", torch.cuda.get_device_name(0))
 else:
-    print("No GPU available, using CPU.")
+    print("No GPU available, using CPU.\n")
 
 def run_cGAN_training() -> None:
 

@@ -576,10 +576,12 @@ class cGAN():
 
         self.optimizer_generator = Adam(self.generator.parameters(), lr=self.generator_lr, betas=(0.9, 0.999), eps=1e-7, weight_decay=False, amsgrad=False)
         self.optimizer_discriminator = Adam(self.discriminator.parameters(), lr=self.discriminator_lr, betas=(0.9, 0.999), eps=1e-7, weight_decay=False, amsgrad=False)
-        self.criterion = nn.BCEWithLogitsLoss()
-    def train(self, num_epochs):
+        
+        self.criterion_generator = nn.BCELoss()
+        self.criterion_discriminator = nn.BCELoss()
 
-        print(f"\nTraining {self.train_message} for {num_epochs} epoch(s)...\n")
+    def train(self, num_epochs):
+        
         for epoch in range(num_epochs):
 
             progress_bar = tqdm(
@@ -588,47 +590,44 @@ class cGAN():
                 total=len(self.data_loader),
                 bar_format=f'Epoch {epoch + 1}/{num_epochs} '+'|{bar:20}{r_bar}'
             )
-
             for index, batch in enumerate(progress_bar):
-                real_images, real_labels = batch['image'], batch['label']
-                real_images = real_images.to(self.device)
-                real_labels = real_labels.to(self.device)
-                real_labels = real_labels.unsqueeze(1).long()
+                real_images, labels = batch['image'], batch['label']
+                real_images = real_images
+                labels = labels
+                labels = labels.unsqueeze(1).long()
+
+                real_target = Variable(torch.ones(real_images.size(0), 1))
+                fake_target = Variable(torch.zeros(real_images.size(0), 1))
 
                 # Train Discriminator
                 self.optimizer_discriminator.zero_grad()
 
-                D_real_output = self.discriminator((real_images, real_labels))
-                D_real_labels = torch.ones_like(D_real_output)
-                D_real_loss = self.criterion(D_real_output, D_real_labels)
+                D_real_output = self.discriminator((real_images, labels))
+                D_real_loss = self.criterion_discriminator(D_real_output.to(self.device), real_target.to(self.device))
 
                 noise_vector = torch.randn(real_images.size(0), self.latent_size)
                 noise_vector = noise_vector.to(self.device)
-                generated_images = self.generator((noise_vector, real_labels))
-                generated_images = generated_images.to(self.device)
+                generated_image = self.generator((noise_vector, labels))
 
-                D_fake_output = self.discriminator((generated_images.detach(), real_labels))
-                D_fake_labels = torch.zeros_like(D_fake_output)
-                D_fake_loss = self.criterion(D_fake_output, D_fake_labels)
+                D_fake_output = self.discriminator((generated_image.detach(), labels))
+                D_fake_loss = self.criterion_discriminator(D_fake_output.to(self.device), fake_target.to(self.device))
 
-                D_total_loss = D_real_loss + D_fake_loss
+                D_total_loss = (D_real_loss + D_fake_loss) / 2
 
-                D_total_loss.backward(retain_graph=True)
+                D_total_loss.backward()
                 self.optimizer_discriminator.step()
 
                 # Train Generator
                 self.optimizer_generator.zero_grad()
 
-                G_output = self.discriminator((generated_images, real_labels))
-                G_labels = torch.ones_like(G_output)
-                G_loss = self.criterion(G_output, G_labels)
+                G_output = self.discriminator((generated_image, labels))
+                G_loss = self.criterion_generator(G_output.to(self.device), real_target.to(self.device))
 
                 G_loss.backward()
                 self.optimizer_generator.step()
 
                 progress_bar.set_postfix({
-                    "D_loss_real": D_real_loss.item(),
-                    "D_loss_fake": D_fake_loss.item(),
+                    "D_loss": D_total_loss.item(),
                     "G_loss": G_loss.item(),
                 })
             print()
