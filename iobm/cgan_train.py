@@ -20,7 +20,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 print(f"\nFound {configs.n_classes} possible classes of data: {configs.data_name}")
 
 if torch.cuda.is_available():
-    print("Using GPU : ", torch.cuda.get_device_name(0))
+    print(f"Using GPU : {torch.cuda.get_device_name(0)}\n")
 else:
     print("No GPU available, using CPU.\n")
 

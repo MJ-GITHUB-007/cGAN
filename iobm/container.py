@@ -581,6 +581,8 @@ class cGAN():
         self.criterion_discriminator = nn.BCELoss()
 
     def train(self, num_epochs):
+
+        print(f"Training {self.train_message} for {num_epochs} epoch(s)...\n")
         
         for epoch in range(num_epochs):
 
