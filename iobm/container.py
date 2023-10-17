@@ -697,7 +697,7 @@ class cGAN_Generator():
 
             # Setting up the progress bar
             progress_bar = tqdm(
-                unit='images',
+                unit=' images',
                 total=self.quantity,
                 bar_format=f'Generating Images '+'|{bar:20}{r_bar}'
             )
@@ -725,7 +725,7 @@ class cGAN_Generator():
         # Save the generated images
         for idx, image in tqdm(
             enumerate(generated_images),
-            unit='images',
+            unit=' images',
             total=len(generated_images),
             bar_format=f'Saving Images '+'|{bar:20}{r_bar}'
         ):
