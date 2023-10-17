@@ -720,15 +720,19 @@ class cGAN_Generator():
             # Concatenate the image batches
             generated_images = torch.cat(generated_images_list, dim=0)
 
-        print(f"\nImage Generation complete")
-        print("Saving images")
+        print()
 
         # Save the generated images
-        for idx, image in enumerate(generated_images):
+        for idx, image in tqdm(
+            enumerate(generated_images),
+            unit='images',
+            total=len(generated_images),
+            bar_format=f'Saving Images '+'|{bar:20}{r_bar}'
+        ):
             save_path = os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'generation_{self.dir_num}', f'class_{self.class_id}__{idx+1}.png')
             save_image(image, save_path)
 
-        print("Images saved")
+        print("\nImages generation complete")
 
 if __name__ == '__main__':
     pass
