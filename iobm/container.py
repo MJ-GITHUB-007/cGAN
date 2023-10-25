@@ -153,7 +153,7 @@ class cGAN_generate_configs(Configs):
         try:
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
             loaded_generator = Generator(device=device, latent_size=self.latent_size, embedding_size=self.embedding_size, n_classes=self.n_classes)
-            master_dict = torch.load(self.output_model)
+            master_dict = torch.load(self.output_model, map_location=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
             loaded_generator.load_state_dict(master_dict['model_state_dict'])
             loaded_n = len(master_dict['info_dict'])
             if self.n_classes != loaded_n:
