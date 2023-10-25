@@ -112,7 +112,7 @@ class cGAN_train_configs(Configs):
         return len(image_extensions) == 1
 
 class cGAN_generate_configs(Configs):
-    def __init__(self, args) -> None:
+    def __init__(self, args, device) -> None:
         super(cGAN_generate_configs, self).__init__()
 
         self.model = args.model
@@ -122,7 +122,7 @@ class cGAN_generate_configs(Configs):
         self.quantity = args.quantity
         self.batch_size = args.batch_size
 
-        master_dict = torch.load(self.output_model)
+        master_dict = torch.load(self.output_model, map_location=device)
         self.n_classes = len(master_dict['info_dict'])
         self.__is_bounded()
         self.class_name = master_dict['info_dict'][self.class_id]
@@ -682,7 +682,7 @@ class cGAN_Generator():
 
         self.generator = Generator(device=self.device, latent_size=self.latent_size, embedding_size=self.embedding_size, n_classes=self.n_classes)
         self.generator.to(self.device)
-        master_dict = torch.load(self.output_model)
+        master_dict = torch.load(self.output_model, map_location=device)
         self.generator.load_state_dict(master_dict['model_state_dict'])
     
     def generate(self):
