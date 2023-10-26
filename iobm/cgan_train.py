@@ -2,7 +2,8 @@ import torch
 import argparse
 import time
 
-from iobm.container import cGAN, cGAN_train_configs
+from iobm.container.configs import cGAN_train_configs
+from iobm.container.core import cGAN
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='cGAN Configuration and Training')
