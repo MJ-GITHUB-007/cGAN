@@ -29,6 +29,13 @@ class cGAN_train_configs(Configs):
 
         self.__is_positive()
         self.__check_args()
+
+        if (
+            '/' in self.data_name or
+            '\\' in self.data_name
+        ):
+            raise Exception(f"Open terminal in path containing the dataset folder")
+
         if not self.__is_image_directory(self.root_path):
             raise Exception(f"Data directory not structured properly")
 

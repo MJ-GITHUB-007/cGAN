@@ -3,7 +3,10 @@ from torch import nn
 from torch.optim import Adam
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
+from torch.utils.data.distributed import DistributedSampler
 from torchvision.utils import save_image
+from torch.nn import functional as F
+from torch.nn.parallel import DistributedDataParallel
 
 import os
 from tqdm import tqdm
@@ -11,23 +14,25 @@ from tqdm import tqdm
 from iobm.container.data import DatasetCollector
 from iobm.container.models import Generator, Discriminator
 
+torch.autograd.set_detect_anomaly(True)
+
 class cGAN():
     def __init__(
-            self,
-            device,
-            data_name,
-            n_classes,
-            project_path,
-            input_model,
-            latent_size,
-            embedding_size,
-            batch_size,
-            generator_lr = 0.0002,
-            discriminator_lr = 0.0002,
-            lambda_gp = 10
-        ) -> None:
+        self,
+        gpu_id,
+        data_name,
+        n_classes,
+        project_path,
+        input_model,
+        latent_size,
+        embedding_size,
+        batch_size,
+        generator_lr=0.0002,
+        discriminator_lr=0.0002,
+        lambda_gp=10
+    ) -> None:
 
-        self.device = device
+        self.gpu_id = gpu_id
         self.data_name = data_name
         self.n_classes = n_classes
         self.project_path = project_path
@@ -40,24 +45,26 @@ class cGAN():
         self.lambda_gp = lambda_gp
 
         dataset = DatasetCollector(data_name=self.data_name, project_path=self.project_path, rescale=True)
-        self.data_loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=True, pin_memory=True)
+        self.data_loader = DataLoader(dataset=dataset, batch_size=self.batch_size, shuffle=False, pin_memory=True, sampler=DistributedSampler(dataset))
         self.model_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_generator.pth')
         self.class_dict = dataset.get_dict()
 
-        self.generator = Generator(device=self.device, latent_size=self.latent_size, embedding_size=self.embedding_size, n_classes=self.n_classes)
-        self.discriminator = Discriminator(device=self.device, embedding_size=self.embedding_size, n_classes=self.n_classes)
-        if self.input_model:
-            self.train_message = f"existing cGAN model \'{os.path.basename(self.input_model)}\'"
-            master_dict = torch.load(self.input_model)
-            self.generator.load_state_dict(master_dict['model_state_dict'])
-        else:
-            self.train_message = f"cGAN model"
+        self.generator = Generator(device=self.gpu_id, latent_size=self.latent_size, embedding_size=self.embedding_size, n_classes=self.n_classes)
+        self.discriminator = Discriminator(device=self.gpu_id, embedding_size=self.embedding_size, n_classes=self.n_classes)
 
         self.optimizer_generator = Adam(self.generator.parameters(), lr=self.generator_lr, betas=(0.9, 0.999), eps=1e-7, weight_decay=False, amsgrad=False)
         self.optimizer_discriminator = Adam(self.discriminator.parameters(), lr=self.discriminator_lr, betas=(0.9, 0.999), eps=1e-7, weight_decay=False, amsgrad=False)
+
+        self.generator = DistributedDataParallel(self.generator, device_ids=[self.gpu_id], broadcast_buffers=False)
+        self.discriminator = DistributedDataParallel(self.discriminator, device_ids=[self.gpu_id], broadcast_buffers=False)
         
-        self.criterion_generator = nn.BCELoss()
-        self.criterion_discriminator = nn.BCELoss()
+        if self.gpu_id == 0:
+            if self.input_model:
+                self.train_message = f"existing cGAN model \'{os.path.basename(self.input_model)}\'"
+                master_dict = torch.load(self.input_model)
+                self.generator.load_state_dict(master_dict['model_state_dict'])
+            else:
+                self.train_message = f"cGAN model"
 
     def train(self, num_epochs):
 
@@ -84,25 +91,25 @@ class cGAN():
                 self.optimizer_discriminator.zero_grad()
 
                 D_real_output = self.discriminator((real_images, labels))
-                D_real_loss = self.criterion_discriminator(D_real_output.to(self.device), real_target.to(self.device))
+                D_real_loss = F.cross_entropy(D_real_output.to(self.gpu_id), real_target.to(self.gpu_id))
 
-                noise_vector = torch.randn(real_images.size(0), self.latent_size)
-                noise_vector = noise_vector.to(self.device)
+                noise_vector = Variable(torch.randn(real_images.size(0), self.latent_size))
+                noise_vector = noise_vector.to(self.gpu_id)
                 generated_image = self.generator((noise_vector, labels))
 
                 D_fake_output = self.discriminator((generated_image.detach(), labels))
-                D_fake_loss = self.criterion_discriminator(D_fake_output.to(self.device), fake_target.to(self.device))
+                D_fake_loss = F.cross_entropy(D_fake_output.to(self.gpu_id), fake_target.to(self.gpu_id))
 
                 D_total_loss = (D_real_loss + D_fake_loss) / 2
 
-                D_total_loss.backward()
+                D_total_loss.backward(retain_graph=True)
                 self.optimizer_discriminator.step()
 
                 # Train Generator
                 self.optimizer_generator.zero_grad()
 
                 G_output = self.discriminator((generated_image, labels))
-                G_loss = self.criterion_generator(G_output.to(self.device), real_target.to(self.device))
+                G_loss = F.cross_entropy(G_output.to(self.gpu_id), real_target.to(self.gpu_id))
 
                 G_loss.backward()
                 self.optimizer_generator.step()
@@ -169,7 +176,7 @@ class cGAN_Generator():
 
         with torch.no_grad():
             # Generate random noise vectors
-            noise_vector = Variable(torch.randn(self.quantity, self.latent_size)).to(self.device)
+            noise_vector = torch.randn(self.quantity, self.latent_size).to(self.device)
 
             # Generate labels (each element is [cls_idx])
             labels = torch.full((self.quantity, 1), self.class_id).to(self.device)
