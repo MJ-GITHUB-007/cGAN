@@ -3,7 +3,7 @@ import argparse
 
 import torch
 
-from iobm.container.models import Generator
+from iobm.container.models import Generator, Discriminator
 
 class Configs():
     def __init__(self) -> None:
@@ -26,7 +26,16 @@ class cGAN_train_configs(Configs):
         self.data_name = args.data
         self.epochs = args.epochs
         self.batch_size = args.batch_size
+        self.display_plots = True
 
+        if (
+            ('F' in args.live_plot) or
+            ('f' in args.live_plot) or
+            ('N' in args.live_plot) or
+            ('n' in args.live_plot)
+        ):
+            self.display_plots = False
+        
         self.__is_positive()
         self.__check_args()
 
@@ -47,8 +56,14 @@ class cGAN_train_configs(Configs):
 
         if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs')):
             os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs'))
+        
+        if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_logs')):
+            os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_logs'))
+        
+        if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_plots')):
+            os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_plots'))
 
-        self.model_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_generator.pth')
+        self.model_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_model.pth')
     
     def __check_args(self) -> None:
         
@@ -62,9 +77,11 @@ class cGAN_train_configs(Configs):
             try:
                 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
                 loaded_generator = Generator(device=device, latent_size=self.latent_size, embedding_size=self.embedding_size, n_classes=self.n_classes)
+                loaded_discriminator = Discriminator(device=device, embedding_size=self.embedding_size, n_classes=self.n_classes)
                 master_dict = torch.load(self.input_model)
-                loaded_generator.load_state_dict(master_dict['model_state_dict'])
-                loaded_n = len(master_dict['info_dict'])
+                loaded_generator.load_state_dict(master_dict['generator_state_dict'])
+                loaded_discriminator.load_state_dict(master_dict['discriminator_state_dict'])
+                loaded_n = len(master_dict['class_dict'])
                 if self.n_classes != loaded_n:
                     raise Exception("Number of classes mismatch in model")
             except:
@@ -137,8 +154,8 @@ class cGAN_generate_configs(Configs):
 
         self.dir_num = self.__get_dir_num()
 
-        if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'generation_{self.dir_num}')):
-            os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'generation_{self.dir_num}'))
+        if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} | class_id-{self.class_id} | quantity-{self.quantity}')):
+            os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} | class_id-{self.class_id} | quantity-{self.quantity}'))
 
     def __check_model(self) -> None:
 
@@ -185,9 +202,14 @@ class cGAN_generate_configs(Configs):
         if dir_num == 0:
             return 1
         
-        nums = []
-        for dir in dirs:
-            num = dir.split('_')[-1]
-            num = int(num)
-            nums.append(num)
-        return max(nums)+1
+        try:
+            nums = []
+            for dir in dirs:
+                num = dir.split('|')[0]
+                num = num.strip()
+                num = num[1:]
+                num = int(num)
+                nums.append(num)
+            return max(nums)+1
+        except:
+            raise Exception("Directory corrupted. Delete 'generate' directory and avoid renaming of directories")

@@ -1,7 +1,5 @@
 import argparse
 import time
-import platform
-import os
 
 import torch
 
@@ -12,8 +10,9 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description='cGAN Configuration and Training')
 
     parser.add_argument('--data', type=str, required=True, help='Directory name containing the data')
-    parser.add_argument('--model', type=str, required=False, help='Pretrained to load. Leave blank to initialize model')
     parser.add_argument('--epochs', type=int, required=True, help='Number of epochs to train')
+    parser.add_argument('--model', type=str, required=False, help='Pretrained to load. Leave blank to initialize model')
+    parser.add_argument('--live_plot', type=str, default='True', help='Display live training stats')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training data')
 
     return parser.parse_args()
@@ -47,7 +46,8 @@ def run_cGAN_training():
         batch_size=configs.batch_size,
         generator_lr=configs.generator_lr,
         discriminator_lr=configs.discriminator_lr,
-        lambda_gp=configs.lambda_gp
+        lambda_gp=configs.lambda_gp,
+        display_plots=configs.display_plots,
     )
     start_time = time.time()
     trainer.train(num_epochs=configs.epochs)

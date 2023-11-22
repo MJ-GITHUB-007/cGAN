@@ -2,7 +2,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 
 import os
-import pickle
+import json
 from PIL import Image
 
 class DatasetCollector(Dataset):
@@ -27,10 +27,10 @@ class DatasetCollector(Dataset):
         if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs')):
             os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs'))
         
-        self.dict_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_index2class.pkl')
+        self.dict_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_index2class.json')
         
-        with open(self.dict_path, 'wb') as file_obj:
-            pickle.dump(self.class_dict, file_obj)
+        with open(self.dict_path, 'w') as file_obj:
+            json.dump(self.class_dict, file_obj)
 
         self.images = self.load_images()
         if rescale:
