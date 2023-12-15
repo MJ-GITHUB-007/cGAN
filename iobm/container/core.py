@@ -75,14 +75,12 @@ class cGAN():
         log_file_path = f"log_{self.__get_dir_num('logs')}.csv"
         log_file_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_logs', log_file_path)
 
-        if self.display:
+        plot_file_path = f"log_{self.__get_dir_num('plots')}.png"
+        plot_file_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_plots', plot_file_path)
 
-            plot_file_path = f"log_{self.__get_dir_num('plots')}.png"
-            plot_file_path = os.path.join(self.project_path, 'cGAN_outputs', 'train', f'{self.data_name}_outs', f'{self.data_name}_plots', plot_file_path)
-
-            fig, axes = plt.subplots(1, 2, figsize=(9, 5))
-            ax1, ax2 = axes
-            D_losses, G_losses = [], []
+        fig, axes = plt.subplots(1, 2, figsize=(9, 5))
+        ax1, ax2 = axes
+        D_losses, G_losses = [], []
         
         # Open a CSV file for writing the logs
         with open(log_file_path, 'a', newline='') as csvfile:
@@ -148,32 +146,32 @@ class cGAN():
 
                     epoch_D_loss = D_total_loss.item()
                     epoch_G_loss = G_loss.item()
-                
+
+                D_losses.append(epoch_D_loss)
+                G_losses.append(epoch_G_loss)
+
+                # Update live plots
+                ax1.clear()
+                ax2.clear()
+
+                # Adjust x-axis values
+                x_values = list(range(self.last_epoch + 1, epoch + 2))
+
+                ax1.plot(x_values, D_losses, label='Discriminator Loss')
+                ax1.set_title('Discriminator loss')
+                ax1.set_xlabel('Epoch')
+                ax1.set_ylabel('Loss')
+                ax1.legend()
+
+                ax2.plot(x_values, G_losses, label='Generator Loss')
+                ax2.set_title('Generator loss')
+                ax2.set_xlabel('Epoch')
+                ax2.set_ylabel('Loss')
+                ax2.legend()
+
+                plt.suptitle('Live Training Stats', fontsize=14)
+
                 if self.display:
-
-                    D_losses.append(epoch_D_loss)
-                    G_losses.append(epoch_G_loss)
-
-                    # Update live plots
-                    ax1.clear()
-                    ax2.clear()
-
-                    # Adjust x-axis values
-                    x_values = list(range(self.last_epoch + 1, epoch + 2))
-
-                    ax1.plot(x_values, D_losses, label='Discriminator Loss')
-                    ax1.set_title('Discriminator loss')
-                    ax1.set_xlabel('Epoch')
-                    ax1.set_ylabel('Loss')
-                    ax1.legend()
-
-                    ax2.plot(x_values, G_losses, label='Generator Loss')
-                    ax2.set_title('Generator loss')
-                    ax2.set_xlabel('Epoch')
-                    ax2.set_ylabel('Loss')
-                    ax2.legend()
-
-                    plt.suptitle('Live Training Stats', fontsize=14)
                     plt.pause(0.1)
 
                 # Append a new row to the CSV file
@@ -183,11 +181,8 @@ class cGAN():
                 self.__save_model(epoch+1)
 
         print(f"Training complete")
-        if self.display:
-            # plt.show()
-            # plt.pause(0.001)
-            plt.savefig(plot_file_path)
-            plt.close()
+        plt.savefig(plot_file_path)
+        plt.close()
 
     def __save_model(self, last_epoch: int=0):
         if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs')):
