@@ -53,11 +53,13 @@ def run_cGAN_training():
     trainer.train(num_epochs=configs.epochs)
     end_time = time.time()
 
-    total_seconds = end_time-start_time
-    hours = total_seconds // 3600
+    total_seconds = end_time - start_time
+    days = total_seconds // 86400
+    hours = (total_seconds % 86400) // 3600
     minutes = (total_seconds % 3600) // 60
     seconds = round(total_seconds % 60, 0)
-    print(f"Total training time : {int(hours)} hour(s) {int(minutes)} minute(s) {int(seconds)} second(s).\n")
+
+    print(f"Total training time: {int(days)} day(s) {int(hours)} hour(s) {int(minutes)} minute(s) {int(seconds)} second(s).\n")
 
 if __name__ == "__main__":
 

@@ -316,7 +316,7 @@ class cGAN_Generator():
             total=len(generated_images),
             bar_format=f'Saving Images '+'|{bar:20}{r_bar}'
         ):
-            save_path = os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} _ class_id-{self.class_id} _ quantity-{self.quantity}', f'class_{self.class_id}__{idx+1}.png')
+            save_path = os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} - class_id-{self.class_id} - quantity-{self.quantity}', f'class_{self.class_id}__{idx+1}.png')
             save_image(image, save_path)
 
         print("\nImages generation complete")

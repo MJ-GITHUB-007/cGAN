@@ -140,9 +140,9 @@ class cGAN_generate_configs(Configs):
         self.batch_size = args.batch_size
 
         master_dict = torch.load(self.output_model, map_location=torch.device('cuda' if torch.cuda.is_available() else 'cpu'))
-        self.n_classes = len(master_dict['info_dict'])
+        self.n_classes = len(master_dict['class_dict'])
         self.__is_bounded()
-        self.class_name = master_dict['info_dict'][self.class_id]
+        self.class_name = master_dict['class_dict'][self.class_id]
         self.__check_model()
         self.__check_args()
 
@@ -154,8 +154,8 @@ class cGAN_generate_configs(Configs):
 
         self.dir_num = self.__get_dir_num()
 
-        if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} _ class_id-{self.class_id} _ quantity-{self.quantity}')):
-            os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} _ class_id-{self.class_id} _ quantity-{self.quantity}'))
+        if not os.path.exists(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} - class_id-{self.class_id} - quantity-{self.quantity}')):
+            os.mkdir(os.path.join(self.project_path, 'cGAN_outputs', 'generate', f'g{self.dir_num} - class_id-{self.class_id} - quantity-{self.quantity}'))
 
     def __check_model(self) -> None:
 
@@ -205,7 +205,7 @@ class cGAN_generate_configs(Configs):
         try:
             nums = []
             for dir in dirs:
-                num = dir.split('_')[0]
+                num = dir.split('-')[0]
                 num = num.strip()
                 num = num[1:]
                 num = int(num)
