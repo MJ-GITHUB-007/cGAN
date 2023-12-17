@@ -32,7 +32,7 @@ class DatasetCollector(Dataset):
         with open(self.dict_path, 'w') as file_obj:
             json.dump(self.class_dict, file_obj)
 
-        self.images = self.load_images()
+        self.images = self.__load_images()
         if rescale:
             self.transform = transforms.Compose([
                 transforms.Resize((self.image_size, self.image_size)),
@@ -45,7 +45,7 @@ class DatasetCollector(Dataset):
                 transforms.ToTensor()
             ])
 
-    def load_images(self):
+    def __load_images(self):
         images = []
         for class_name in sorted(os.listdir(self.root_path)):
             class_folder = os.path.join(self.root_path, class_name)
