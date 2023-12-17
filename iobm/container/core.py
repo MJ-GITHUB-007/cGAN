@@ -105,8 +105,6 @@ class cGAN():
 
                 for index, batch in enumerate(progress_bar):
                     real_images, labels = batch['image'], batch['label']
-                    real_images = real_images
-                    labels = labels
                     labels = labels.unsqueeze(1).long()
 
                     real_target = Variable(torch.ones(real_images.size(0), 1))
