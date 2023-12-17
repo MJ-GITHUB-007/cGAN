@@ -8,8 +8,8 @@ from iobm.container.core import cGAN_Generator
 def parse_arguments():
     parser = argparse.ArgumentParser(description='cGAN Configuration and Training')
 
-    parser.add_argument('--model', type=str, required=True, help='Pretrained to load')
-    parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training data')
+    parser.add_argument('--model', type=str, required=True, help='Pretrained model to load')
+    parser.add_argument('--batch_size', type=int, default=64, help='Batch size for generating data')
     parser.add_argument('--class_id', type=int, required=True, help='Type of image to generate')
     parser.add_argument('--quantity', type=int, required=True, help='Number of images to generate')
 
