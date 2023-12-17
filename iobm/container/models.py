@@ -1,5 +1,5 @@
 import torch
-from torch import nn
+import torch.nn as nn
 
 # Define the custom rescale layer class
 class TensorScaler(nn.Module):
