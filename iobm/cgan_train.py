@@ -11,7 +11,7 @@ def parse_arguments():
 
     parser.add_argument('--data', type=str, required=True, help='Directory name containing the data')
     parser.add_argument('--epochs', type=int, required=True, help='Number of epochs to train')
-    parser.add_argument('--model', type=str, required=False, help='Pretrained to load. Leave blank to initialize model')
+    parser.add_argument('--model', type=str, required=False, help='Pretrained model to load. Leave blank to initialize model')
     parser.add_argument('--live_plot', type=str, default='False', help='Display live training stats')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size for training data')
 
